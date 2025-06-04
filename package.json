@@ -1,0 +1,17 @@
+{
+  "name": "3eppi",
+  "version": "1.0.0",
+  "description": "Electra Timelapse Gallery",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No tests\"",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

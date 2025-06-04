@@ -1,9 +1,8 @@
 const { useState, useEffect, useRef } = React;
 
-function Sidebar({ cameras, selected, onSelect, onAdd, slideshow, setSlideshow }) {
+function Sidebar({ cameras, selected, onSelect, onAdd, slideshow, setSlideshow, intervalSec, setIntervalSec }) {
   const [newName, setNewName] = useState('');
   const [newUrl, setNewUrl] = useState('');
-  const [intervalSec, setIntervalSec] = useState(5);
 
   const addCamera = () => {
     if (!newName || !newUrl) return;
@@ -37,10 +36,12 @@ function Sidebar({ cameras, selected, onSelect, onAdd, slideshow, setSlideshow }
           <input type="checkbox" checked={slideshow} onChange={e => setSlideshow(e.target.checked)} />
           <span>Slideshow Mode</span>
         </label>
+        <label className="block text-sm">Interval (s)</label>
         <input
           type="number"
           className="w-full p-1 text-black"
           value={intervalSec}
+          min="1"
           onChange={e => setIntervalSec(parseInt(e.target.value) || 1)}
         />
       </div>
@@ -48,17 +49,26 @@ function Sidebar({ cameras, selected, onSelect, onAdd, slideshow, setSlideshow }
   );
 }
 
-function CameraGrid({ cameras, selected, onDelete }) {
+function CameraGrid({ cameras, onDelete }) {
+  const openFullscreen = url => window.open(url, '_blank');
+
   return (
     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-auto">
       {cameras.map((cam, idx) => (
         <div key={idx} className="rounded shadow bg-white relative">
-          <div className="p-2 font-semibold bg-gray-800 text-white rounded-t">{cam.name}</div>
-          <div className="p-2">
-            <img src={cam.url} alt={cam.name} className="w-full h-48 object-cover" />
+          <div className="p-2 font-semibold bg-gray-800 text-white rounded-t flex justify-between items-center">
+            <span>{cam.name}</span>
           </div>
-          <div className="absolute top-1 right-1 space-x-1">
-            <button className="bg-red-600 text-white px-2 py-1 rounded" onClick={() => onDelete(idx)}>Delete</button>
+          <div className="p-2">
+            <img src={cam.url} alt={cam.name} className="w-full h-48 object-cover rounded" />
+          </div>
+          <div className="absolute top-1 right-1 flex space-x-1">
+            <button className="bg-white text-gray-700 rounded p-1 shadow" title="Fullscreen" onClick={() => openFullscreen(cam.url)}>
+              <span className="material-icons text-base">fullscreen</span>
+            </button>
+            <button className="bg-red-600 text-white rounded p-1 shadow" title="Delete" onClick={() => onDelete(idx)}>
+              <span className="material-icons text-base">delete</span>
+            </button>
           </div>
         </div>
       ))}
@@ -70,18 +80,19 @@ function App() {
   const [cameras, setCameras] = useState([]);
   const [selected, setSelected] = useState(null);
   const [slideshow, setSlideshow] = useState(false);
+  const [intervalSec, setIntervalSec] = useState(5);
   const slideshowRef = useRef(null);
 
   useEffect(() => {
-    if (slideshow) {
+    if (slideshow && cameras.length > 0) {
       slideshowRef.current = setInterval(() => {
         setSelected(prev => (prev === null ? 0 : (prev + 1) % cameras.length));
-      }, 5000);
+      }, intervalSec * 1000);
     } else {
       clearInterval(slideshowRef.current);
     }
     return () => clearInterval(slideshowRef.current);
-  }, [slideshow, cameras]);
+  }, [slideshow, cameras, intervalSec]);
 
   const addCamera = cam => setCameras([...cameras, cam]);
   const deleteCamera = idx => setCameras(cameras.filter((_, i) => i !== idx));
@@ -95,8 +106,10 @@ function App() {
         onAdd={addCamera}
         slideshow={slideshow}
         setSlideshow={setSlideshow}
+        intervalSec={intervalSec}
+        setIntervalSec={setIntervalSec}
       />
-      <CameraGrid cameras={selected !== null ? [cameras[selected]] : cameras} selected={selected} onDelete={deleteCamera} />
+      <CameraGrid cameras={selected !== null ? [cameras[selected]] : cameras} onDelete={deleteCamera} />
     </div>
   );
 }
